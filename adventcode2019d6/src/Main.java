@@ -1,8 +1,11 @@
+import com.sun.xml.internal.fastinfoset.util.StringArray;
+import org.omg.PortableInterceptor.SYSTEM_EXCEPTION;
+
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
+
+import static com.sun.tools.doclint.Entity.ge;
 
 public class Main {
 
@@ -10,60 +13,80 @@ public class Main {
 
         Scanner input = new Scanner(new File("input.txt"));
         //Scanner input = new Scanner(new File("inputTest.txt"));
-        //String input = "COM)B\nB)C\nC)D\nD)E\nE)F\nB)G\nG)H\nD)I\nE)J\nJ)K\nK)L";
-        //String input = "COM)B\nB)C\nB)D";
 
+        HashMap<String,List<String>> planetas = new HashMap<>();
 
-        //String[] puzzle = input.split("\\n");
-
-        List<Planeta> planetas = new ArrayList<>();
-
-        while (input.hasNext()){
+        while (input.hasNext()) {
 
             String orbita = input.nextLine();
 
-            String nombrePlaneta = orbita.split("\\)")[0];
-            String nombreOrbita = orbita.split("\\)")[1];
+            String planet = orbita.split("\\)")[0];
+            String orbital = orbita.split("\\)")[1];
 
-            if (planetas.size() == 0){
-                Planeta planeta = new Planeta(nombrePlaneta);
-                planeta.setOrbit(new Planeta(nombreOrbita));
-                planetas.add(planeta);
+            if (planetas.get(planet) == null){
+                List<String> orbitales = new ArrayList<>();
+                planetas.put(planet,orbitales);
             }
+            planetas.get(planet).add(orbital);
 
-            Boolean finded = false;
-
-            for (int i = 0 ; i < planetas.size() ; i++){
-                System.out.println(orbita);
-                if (nombrePlaneta.equals(planetas.get(i).getNombre())){
-                    planetas.get(i).setOrbit(new Planeta(nombreOrbita));
-                    finded = true;
-                }else if (planetas.get(i).getOrbit(nombrePlaneta) != null){
-                    planetas.get(i).getOrbit(nombrePlaneta).setOrbit(new Planeta(nombreOrbita));
-                    finded = true;
-                }else if (nombreOrbita.equals(planetas.get(i).getNombre())){
-                    Planeta addPlanet = new Planeta(nombrePlaneta);
-                    addPlanet.setOrbit(planetas.get(i));
-                    planetas.add(addPlanet);
-                    finded = true;
-                }
-            }
-            if (!finded) {
-                Planeta addPlanet = new Planeta(nombrePlaneta);
-                addPlanet.setOrbit(new Planeta(nombreOrbita));
-                planetas.add(addPlanet);
-            }
         }
 
-        for (int i=0 ; i < planetas.size() ; i++){
-            for (int j=0 ; j < planetas.size() ; j++){
-                if (planetas.get(i).getOrbit(planetas.get(j).getNombre()) != null){
-                    planetas.get(i).setOrbit(planetas.get(j));
-                    planetas.remove(planetas.get(j));
+        int minA = 100000;
+        int minB = 100000;
+
+        String nodo = "";
+
+        for (Map.Entry<String,List<String>> entry : planetas.entrySet()){
+
+            if (minA > getNumberOrbitsToPlanet(entry.getKey(),"YOU",planetas) && getNumberOrbitsToPlanet(entry.getKey(),"YOU",planetas) != 0)
+            {
+                if (minB > getNumberOrbitsToPlanet(entry.getKey(),"SAN",planetas) && getNumberOrbitsToPlanet(entry.getKey(),"SAN",planetas) != 0) {
+                    minA = getNumberOrbitsToPlanet(entry.getKey(), "YOU", planetas);
+                    minB = getNumberOrbitsToPlanet(entry.getKey(), "SAN", planetas);
+                    nodo = entry.getKey();
                 }
             }
         }
 
-        System.out.println(planetas.toString());
+        int result = minA + minB - 4;
+
+        System.out.println("minA:" + minA + ", minB:" + minB + ", nodo:" + nodo);
+        System.out.println("Resultado:" + result);
+
     }
+
+
+    private static int getNumberOrbitsToPlanet(String planetCenter, String planetFinded, HashMap<String, List<String>> planetas){
+
+        List<String> orbitales = planetas.get(planetCenter);
+        int numeroOrbitales = 0;
+
+        if (planetCenter.equals(planetFinded)){
+            return 1;
+        }else if (orbitales != null) {
+            for (String orbtal : orbitales) {
+               numeroOrbitales = getNumberOrbitsToPlanet(orbtal,planetFinded,planetas);
+               if (numeroOrbitales > 0) {
+                   numeroOrbitales++;
+                   break;
+               }
+            }
+        }
+        return numeroOrbitales;
+
+    }
+
+    private static int getNumberOrbits(String planet, HashMap<String, List<String>> planetas){
+
+        List<String> orbitales = planetas.get(planet);
+        int numeroOrbitales = 0;
+
+        if (orbitales != null)
+            for (String orbtal : orbitales)
+                numeroOrbitales = 1 + numeroOrbitales +  getNumberOrbits(orbtal, planetas);
+
+        return numeroOrbitales;
+    }
+
+
 }
